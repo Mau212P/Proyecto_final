@@ -37,11 +37,11 @@ export default class pedidosDAO {
         }
     }
 
-    static async updatePedido(pedidoId, clienteId, cantidad_producto, hora_pedido) {
+    static async updatePedido(pedidoId, cantidad_producto, total, hora_pedido) {
         try {
             const updateResponse = await pedidosDAO.Pedidos.updateOne(
-                { id_cliente: clienteId, _id: pedidoId/*new pedidosDAO.ObjectId(clienteId), _id: new pedidosDAO.ObjectId(pedidoId)*/ },
-                { $set: { cantidad_producto, hora_pedido } },
+                { _id: new pedidosDAO.ObjectId(pedidoId)  },
+                { $set: { cantidad_producto, total, hora_pedido } },
             );
             return updateResponse;
         } catch (e) {
@@ -50,11 +50,10 @@ export default class pedidosDAO {
         }
     }
 
-    static async deletePedido(pedidoId, clienteId) {
+    static async deletePedido(pedidoId) {
         try {
             const deleteResponse = await pedidosDAO.Pedidos.deleteOne({
                 _id: new pedidosDAO.ObjectId(pedidoId),
-                user_id: new pedidosDAO.ObjectId(clienteId),
             });
             return deleteResponse;
         } catch (e) {
