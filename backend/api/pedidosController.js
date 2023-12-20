@@ -1,70 +1,64 @@
-//pedidosController.js
-import pedidosDAO from '../dao/pedidosDAO.js';
+//pedidosDAO.js
+import mongodb from 'mongodb';
 
-export default class pedidosController {
-    static async apiPostPedido(req, res, next) {
+export default class pedidosDAO {
+    static Pedidos;
+    static ObjectId = mongodb.ObjectId;
+    static Int32 = mongodb.Int32;
+    static Double = mongodb.Double;
+    //static String = mongodb.String;
+    
+    static async injectDB(conn) {
+        if (pedidosDAO.Pedidos) {
+            return;
+        }
         try {
-            const id_cliente = req.body.id_cliente;
-            const id_restaurante = req.body.id_restaurante;
-            const id_producto = req.body.id_producto;
-            const id_destino = req.body.id_destino;
-            const cantidad_producto = req.body.cantidad_producto;
-            const total = req.body.total;
-            const hora_pedido = req.body.hora_pedido;
-            const pedidosResponse = await pedidosDAO.addPedido(
-                id_cliente,
-                id_restaurante,
-                id_producto,
-                id_destino,
-                cantidad_producto,
-                total,
+            pedidosDAO.Pedidos = await conn.db(process.env.NS).collection('Pedidos');
+        } catch (e) {
+            console.error(`unable to establish connection handle in pedidosDAO: ${e}`);
+        }
+    }
+
+    static async addPedido(clienteId, restauranteId, productoId, destinoId, cantidad_producto, total, hora_pedido) {
+        try {
+            const pedidosDoc = {
+                id_cliente: new pedidosDAO.ObjectId(clienteId),
+                id_restaurante: new pedidosDAO.ObjectId(restauranteId),
+                id_producto: new pedidosDAO.ObjectId(productoId),
+                id_destino: new pedidosDAO.ObjectId(destinoId),
+                cantidad_producto: new pedidosDAO.Int32(cantidad_producto),
+                total: new pedidosDAO.Double(total),
                 hora_pedido
-            );
-            if(pedidosResponse){
-                res.json({ status: 'success ' });
-            }
+            };
+            return await pedidosDAO.Pedidos.insertOne(pedidosDoc);
         } catch (e) {
-            res.status(500).json({ error: e.message });
+            console.error(`unable to request: ${e}`);
+            return { error: e };
         }
     }
 
-    static async apiUpdatePedido(req, res, next) {
+    static async updatePedido(pedidoId, cantidad_producto, total, hora_pedido) {
         try {
-            const _id = req.body._id;
-            const id_cliente = req.body.id_cliente;
-            const cantidad_producto = req.body.cantidad_producto;
-            const hora_pedido = req.body.hora_pedido;
-            const pedidosResponse = await pedidosDAO.updatePedido(
-                _id,
-                id_cliente,
-                cantidad_producto,
-                hora_pedido,
+            const updateResponse = await pedidosDAO.Pedidos.updateOne(
+                { _id: new pedidosDAO.ObjectId(pedidoId)  },
+                { $set: { cantidad_producto, total, hora_pedido } },
             );
-            const { error } = pedidosResponse;
-            console.log(pedidosResponse);
-            if (error) {
-                res.status.json({ error });
-            }
-            if (pedidosResponse.modifiedCount === 0) {
-                throw new Error('unable to update pedido. User may not be original poster');
-            }
-            res.json({ status: 'success ' });
+            return updateResponse;
         } catch (e) {
-            res.status(500).json({ error: e.message });
+            console.error(`unable to update request: ${e}`);
+            return { error: e };
         }
     }
 
-    static async apiDeletePedido(req, res, next) {
+    static async deletePedido(pedidoId) {
         try {
-            const reviewId = req.body.review_id;
-            const userId = req.body.user_id;
-            const pedidosResponse = await pedidosDAO.deletePedido(
-                reviewId,
-                userId,
-            );
-            res.json({ status: 'success ' });
+            const deleteResponse = await pedidosDAO.Pedidos.deleteOne({
+                _id: new pedidosDAO.ObjectId(pedidoId),
+            });
+            return deleteResponse;
         } catch (e) {
-            res.status(500).json({ error: e.message });
+            console.error(`unable to delete request: ${e}`);
+            return { error: e };
         }
     }
 }
