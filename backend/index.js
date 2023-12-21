@@ -5,6 +5,9 @@ import cors from 'cors';
 import clientesRoute from './api/clientesRoute.js';
 import clientesDAO from './dao/clientesDAO.js';
 import pedidosDAO from './dao/pedidosDAO.js';
+import restauranteDAO from './dao/restauranteDAO.js';
+import ubicacionDAO from './dao/ubicacionDAO.js';
+import productoDAO from './dao/productoDAO.js';
 import dotenv from 'dotenv';
 import mongodb from 'mongodb';
 
@@ -38,7 +41,10 @@ class Index {
 			// Connect to the MongoDB cluster
 			await client.connect();
 			await clientesDAO.injectDB(client);
+			await restauranteDAO.injectDB(client);
 			await pedidosDAO.injectDB(client);
+			await ubicacionDAO.injectDB(client);
+			await productoDAO.injectDB(client);
 			Index.app.listen(port, () => {
 				console.log(`server is running on port:${port}`);
 			});
