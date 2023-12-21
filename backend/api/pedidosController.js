@@ -2,6 +2,33 @@
 import pedidosDAO from '../dao/pedidosDAO.js';
 
 export default class pedidosController {
+    static async apiGetPedido(req, res, next) {
+        const pedidosPerPage = req.query.pedidosPerPage ? parseInt(req.query.pedidosPerPage, 10) : 20;
+        const page = req.query.page ? parseInt(req.query.page, 10) : 0;
+
+        let filters = {};
+        if (req.query.id_cliente) {
+            filters.id_cliente = req.query.id_cliente;
+        } else if (req.query.id_producto) {
+            filters.id_producto = req.query.id_producto;
+        }
+
+        const { pedidosList, totalNumPedidos } = await pedidosDAO.getPedido({
+            filters,
+            page,
+            pedidosPerPage,
+        });
+
+        let response = {
+            pedidos: pedidosList,
+            page: page,
+            filters: filters,
+            entries_per_page: pedidosPerPage,
+            total_results: totalNumPedidos,
+        };
+        res.json(response);
+    }
+
     static async apiPostPedido(req, res, next) {
         try {
             const id_cliente = req.body.id_cliente;
