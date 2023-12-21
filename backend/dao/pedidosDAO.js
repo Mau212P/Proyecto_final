@@ -19,6 +19,40 @@ export default class pedidosDAO {
         }
     }
 
+    static async getPedido({ filters = null, page = 0, pedidosPerPage = 20 } = {}) {
+        let query;
+        if (filters) {
+            console.log(filters)
+            if ("id_cliente" in filters) {
+                query = { "id_cliente": new mongodb.ObjectId(filters["id_cliente"]) };
+            } else if ("id_producto" in filters) {
+                query = { "id_producto": new mongodb.ObjectId(filters["id_producto"]) };
+            }
+        }
+
+        let cursor;
+        
+        try {
+            console.log(query);
+            cursor = await pedidosDAO.Pedidos.find(query);
+        } catch (e) {
+            console.error(`Unable to issue find command, ${e}`);
+            return { pedidosList: [], totalNumPedidos: 0 }
+        }
+
+        const displayCursor = cursor.limit(pedidosPerPage).skip(pedidosPerPage * page);
+
+        try {
+            const pedidosList = await displayCursor.toArray();
+            const totalNumPedidos = await pedidosDAO.Pedidos.countDocuments(query);
+
+            return { pedidosList, totalNumPedidos }
+        } catch (e) {
+            console.error(`Unable to convert cursor to array or problem counting documents, ${e}`);
+            return { pedidosList: [], totalNumPedidos: 0 }
+        }
+    }
+
     static async addPedido(clienteId, restauranteId, productoId, destinoId, cantidad_producto, total, hora_pedido) {
         try {
             const pedidosDoc = {
